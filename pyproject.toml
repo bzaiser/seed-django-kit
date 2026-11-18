@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "seed-django-kit"
+version = "1.0.0"
+description = "Reusable Django demo-data seeding framework (manage.py seed_demo) with factory registry and reset support."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "Django>=4.2",
+]
+
+[tool.setuptools.packages.find]
+include = ["seed_kit*"]
