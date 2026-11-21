@@ -55,6 +55,10 @@ class SeedKitTests(TestCase):
         self.assertTrue("@example.com" in fake_email(fake_name()))
 
 
+    def test_no_missing_migrations(self):
+        call_command("makemigrations", "seed_kit", "--check", "--dry-run", verbosity=0)
+
+
 if __name__ == "__main__":
     from django.test.runner import DiscoverRunner
     call_command("migrate", verbosity=0)
