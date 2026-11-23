@@ -1,0 +1,260 @@
+{% extends "design_studio/layouts/base.html" %}
+{% block title %}Ersteinrichtungs-Assistent{% endblock %}
+{% block content %}
+<div class="container py-4" style="max-width: 960px;">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <div>
+            <h1 class="h3 fw-bold mb-1"><i class="bi bi-magic text-primary me-2"></i>Ersteinrichtungs-Assistent</h1>
+            <p class="text-muted small mb-0">Richten Sie App-Zweck, Module, Webseite, Formulare, Gruppen und optionale Demo-Daten in 5 Schritten ein. Bestehende Daten werden nur ergänzt, nicht überschrieben.</p>
+        </div>
+        {% if wizard_state.is_completed %}
+        <span class="badge text-bg-success rounded-pill px-3 py-2"><i class="bi bi-check-circle me-1"></i>Bereits eingerichtet ({{ wizard_state.profile_key }})</span>
+        {% endif %}
+    </div>
+
+    <!-- Step Progress Bar -->
+    <div class="d-flex flex-wrap gap-2 mb-4" id="wizardStepPills">
+        <button type="button" class="btn btn-sm rounded-pill btn-primary wiz-step-btn" data-step="1">1. Projekt &amp; Zweck</button>
+        <button type="button" class="btn btn-sm rounded-pill btn-outline-secondary wiz-step-btn" data-step="2">2. Module</button>
+        <button type="button" class="btn btn-sm rounded-pill btn-outline-secondary wiz-step-btn" data-step="3">3. Webseite &amp; Formulare</button>
+        <button type="button" class="btn btn-sm rounded-pill btn-outline-secondary wiz-step-btn" data-step="4">4. Gruppen &amp; Kalender</button>
+        <button type="button" class="btn btn-sm rounded-pill btn-outline-secondary wiz-step-btn" data-step="5">5. Zusammenfassung &amp; Start</button>
+    </div>
+
+    <form method="post" action="{% url 'seed_kit:wizard_apply' %}" id="setupWizardForm" class="card shadow-sm rounded-4">
+        {% csrf_token %}
+        <div class="card-body p-4">
+
+            <!-- STEP 1 -->
+            <div class="wiz-pane" data-step="1">
+                <h2 class="h5 fw-bold mb-3">1. Projekt &amp; Verwendungszweck</h2>
+                <div class="row g-3 mb-3">
+                    {% for key, prof in profiles.items %}
+                    <div class="col-md-4">
+                        <label class="card h-100 p-3 cursor-pointer border-2 wiz-profile-card {% if key == wizard_state.profile_key %}border-primary bg-primary bg-opacity-10{% endif %}" style="cursor:pointer;">
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <input type="radio" name="profile_key" value="{{ key }}" class="form-check-input wiz-profile-radio" {% if key == wizard_state.profile_key %}checked{% endif %}>
+                                <i class="bi {{ prof.icon }} text-primary"></i>
+                                <span class="fw-bold small">{{ prof.label }}</span>
+                            </div>
+                            <div class="small text-muted">{{ prof.description }}</div>
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Projekt- / Organisationsname</label>
+                        <input type="text" name="site_name" id="wizSiteName" class="form-control" value="{{ current_site_name }}" placeholder="z. B. TSV Musterstadt e.V.">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Kontakt-E-Mail</label>
+                        <input type="email" name="contact_email" id="wizEmail" class="form-control" value="{{ current_email }}" placeholder="info@beispiel.de">
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label small fw-semibold">Kurzbeschreibung / Tagline</label>
+                        <input type="text" name="tagline" id="wizTagline" class="form-control" value="{{ current_tagline }}" placeholder="z. B. Sport, Kurse &amp; Gemeinschaft">
+                    </div>
+                    {% if genres %}
+                    <div class="col-md-4">
+                        <label class="form-label small fw-semibold">Design-Stil (Genre)</label>
+                        <select name="genre" class="form-select">
+                            <option value="">Standard</option>
+                            {% for gk, gl in genres %}<option value="{{ gk }}">{{ gl }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- STEP 2 -->
+            <div class="wiz-pane d-none" data-step="2">
+                <h2 class="h5 fw-bold mb-3">2. Welche Module soll die App aktivieren?</h2>
+                {% if installed_kits.domain_kit %}
+                <div class="row g-2 mb-3">
+                    {% for mk, ml in domain_modules %}
+                    <div class="col-md-6">
+                        <label class="form-check border rounded-3 p-2 ps-4 bg-body-tertiary d-flex align-items-center gap-2">
+                            <input type="checkbox" name="modules" value="{{ mk }}" class="form-check-input wiz-mod-chk">
+                            <span class="small fw-semibold">{{ ml }}</span>
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="alert alert-light border small"><code>domain_kit</code> ist nicht installiert.</div>
+                {% endif %}
+                <div class="small text-muted">
+                    Aktive Zusatz-Kits:
+                    {% if installed_kits.cal_kit %}<span class="badge text-bg-success">cal_kit</span>{% endif %}
+                    {% if installed_kits.list_kit %}<span class="badge text-bg-success">list_kit</span>{% endif %}
+                    {% if installed_kits.site_kit %}<span class="badge text-bg-success">site_kit</span>{% endif %}
+                    {% if installed_kits.notify_kit %}<span class="badge text-bg-success">notify_kit</span>{% endif %}
+                </div>
+            </div>
+
+            <!-- STEP 3 -->
+            <div class="wiz-pane d-none" data-step="3">
+                <h2 class="h5 fw-bold mb-3">3. Öffentliche Webseite &amp; Online-Formulare</h2>
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" name="enable_website" id="wizEnableWebsite" checked>
+                    <label class="form-check-label fw-semibold" for="wizEnableWebsite">Öffentliche Webseite (<code>site_kit</code>) einrichten</label>
+                </div>
+                <div class="row g-3" id="wizWebsiteOptions">
+                    <div class="col-md-6">
+                        <div class="fw-semibold small mb-2">Startseiten-Bausteine</div>
+                        {% for bk, bl in website_blocks %}
+                        <label class="form-check mb-1">
+                            <input type="checkbox" name="blocks" value="{{ bk }}" class="form-check-input wiz-block-chk">
+                            <span class="form-check-label small">{{ bl }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                    <div class="col-md-6">
+                        <div class="fw-semibold small mb-2">Online-Formulare (mit Bestätigung)</div>
+                        {% for fk, fl in form_presets %}
+                        <label class="form-check mb-1">
+                            <input type="checkbox" name="forms" value="{{ fk }}" class="form-check-input wiz-form-chk">
+                            <span class="form-check-label small">{{ fl }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 4 -->
+            <div class="wiz-pane d-none" data-step="4">
+                <h2 class="h5 fw-bold mb-3">4. Benutzergruppen &amp; Kalender</h2>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="fw-semibold small mb-2">Standard-Benutzergruppen anlegen</div>
+                        {% for gname in "Mitglied / Portal,Redakteur,Buchhaltung / Kassierer,Mitarbeiter,Leitung / Vorstand"|make_list %}{% endfor %}
+                        <label class="form-check mb-1"><input type="checkbox" name="groups" value="Mitglied / Portal" class="form-check-input wiz-group-chk"><span class="form-check-label small"><strong>Mitglied / Portal</strong> (Self-Service <code>/domain/me/</code>)</span></label>
+                        <label class="form-check mb-1"><input type="checkbox" name="groups" value="Redakteur" class="form-check-input wiz-group-chk"><span class="form-check-label small"><strong>Redakteur</strong> (Webseite, News &amp; Termine)</span></label>
+                        <label class="form-check mb-1"><input type="checkbox" name="groups" value="Buchhaltung / Kassierer" class="form-check-input wiz-group-chk"><span class="form-check-label small"><strong>Buchhaltung / Kassierer</strong> (Konten &amp; Verträge)</span></label>
+                        <label class="form-check mb-1"><input type="checkbox" name="groups" value="Mitarbeiter" class="form-check-input wiz-group-chk"><span class="form-check-label small"><strong>Mitarbeiter</strong> (Inventar, Räume, Dokumente)</span></label>
+                        <label class="form-check mb-2"><input type="checkbox" name="groups" value="Leitung / Vorstand" class="form-check-input wiz-group-chk"><span class="form-check-label small"><strong>Leitung / Vorstand</strong> (Alle Fachmodule)</span></label>
+                        <label class="form-label small fw-semibold">Weitere eigene Gruppen (kommagetrennt)</label>
+                        <input type="text" name="custom_groups" class="form-control form-control-sm" placeholder="z. B. Trainer, Jugendleitung">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold">Kalender-Kategorien (kommagetrennt)</label>
+                        <input type="text" name="calendar_categories_text" id="wizCalCats" class="form-control mb-2" value="Veranstaltungen, Kurse, Vorstand / Intern">
+                        <div class="small text-muted">Tipp: Im Kalender lassen sich Kategorien als „Team-Kalender“ und „Standardmäßig öffentlich“ konfigurieren.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 5 -->
+            <div class="wiz-pane d-none" data-step="5">
+                <h2 class="h5 fw-bold mb-3">5. Zusammenfassung &amp; Demo-Daten</h2>
+                <div class="alert alert-light border small mb-3" id="wizSummaryBox"></div>
+                <div class="border rounded-3 p-3 bg-body-tertiary mb-3">
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" name="run_demo_seed" id="wizRunDemo">
+                        <label class="form-check-label fw-semibold" for="wizRunDemo">Realistische Demo-Beispieldaten erzeugen (<code>seed_kit</code>)</label>
+                    </div>
+                    <div class="row g-2 align-items-center">
+                        <div class="col-auto"><label class="small text-muted">Anzahl je Bereich:</label></div>
+                        <div class="col-auto"><input type="number" name="demo_count" value="5" min="1" max="50" class="form-control form-control-sm" style="width:80px;"></div>
+                        <div class="col-auto">
+                            <label class="form-check mb-0">
+                                <input class="form-check-input" type="checkbox" name="reset_demo">
+                                <span class="form-check-label small text-danger">Bestehende Demo-Daten vorher leeren</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="hide_on_start" id="wizHideOnStart" checked>
+                    <label class="form-check-label small" for="wizHideOnStart">Assistent beim nächsten Admin-Login nicht automatisch öffnen (jederzeit über <code>/setup/</code> erreichbar)</label>
+                </div>
+            </div>
+
+        </div>
+        <div class="card-footer d-flex justify-content-between align-items-center">
+            <button type="button" class="btn btn-outline-secondary rounded-pill px-3" id="wizPrevBtn" disabled>Zurück</button>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-primary rounded-pill px-4" id="wizNextBtn">Weiter</button>
+                <button type="submit" class="btn btn-success rounded-pill px-4 fw-bold d-none" id="wizSubmitBtn"><i class="bi bi-check2-circle me-1"></i>App jetzt einrichten</button>
+            </div>
+        </div>
+    </form>
+
+    {% if not wizard_state.hide_on_start %}
+    <form method="post" action="{% url 'seed_kit:wizard_dismiss' %}" class="text-end mt-2">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-link btn-sm text-muted">Assistenten überspringen &amp; später einrichten</button>
+    </form>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const profiles = {{ profiles_json|safe }};
+    let currentStep = 1;
+    const totalSteps = 5;
+
+    function showStep(step) {
+        currentStep = Math.max(1, Math.min(totalSteps, step));
+        document.querySelectorAll(".wiz-pane").forEach(function (el) {
+            el.classList.toggle("d-none", Number(el.dataset.step) !== currentStep);
+        });
+        document.querySelectorAll(".wiz-step-btn").forEach(function (btn) {
+            const active = Number(btn.dataset.step) === currentStep;
+            btn.classList.toggle("btn-primary", active);
+            btn.classList.toggle("btn-outline-secondary", !active);
+        });
+        document.getElementById("wizPrevBtn").disabled = currentStep === 1;
+        document.getElementById("wizNextBtn").classList.toggle("d-none", currentStep === totalSteps);
+        document.getElementById("wizSubmitBtn").classList.toggle("d-none", currentStep !== totalSteps);
+        if (currentStep === 5) updateSummary();
+    }
+
+    function applyProfilePreset(key) {
+        const p = profiles[key];
+        if (!p) return;
+        document.querySelectorAll(".wiz-profile-card").forEach(function (c) {
+            const r = c.querySelector(".wiz-profile-radio");
+            const on = r && r.value === key;
+            c.classList.toggle("border-primary", on);
+            c.classList.toggle("bg-primary", on);
+            c.classList.toggle("bg-opacity-10", on);
+        });
+        document.querySelectorAll(".wiz-mod-chk").forEach(function (cb) { cb.checked = (p.modules || []).includes(cb.value); });
+        const webEl = document.getElementById("wizEnableWebsite");
+        if (webEl) webEl.checked = !!p.enable_website;
+        document.querySelectorAll(".wiz-block-chk").forEach(function (cb) { cb.checked = (p.blocks || []).includes(cb.value); });
+        document.querySelectorAll(".wiz-form-chk").forEach(function (cb) { cb.checked = (p.forms || []).includes(cb.value); });
+        document.querySelectorAll(".wiz-group-chk").forEach(function (cb) { cb.checked = (p.groups || []).includes(cb.value); });
+        const calInp = document.getElementById("wizCalCats");
+        if (calInp) calInp.value = (p.calendar_categories || []).map(function (c) { return c.name; }).join(", ");
+    }
+
+    function updateSummary() {
+        const mods = Array.from(document.querySelectorAll(".wiz-mod-chk:checked")).map(function (c) { return c.value; });
+        const blocks = Array.from(document.querySelectorAll(".wiz-block-chk:checked")).map(function (c) { return c.value; });
+        const forms = Array.from(document.querySelectorAll(".wiz-form-chk:checked")).map(function (c) { return c.value; });
+        const groups = Array.from(document.querySelectorAll(".wiz-group-chk:checked")).map(function (c) { return c.value; });
+        document.getElementById("wizSummaryBox").innerHTML =
+            "<strong>Module:</strong> " + (mods.join(", ") || "—") + "<br>" +
+            "<strong>Startseiten-Blöcke:</strong> " + (blocks.join(", ") || "—") + "<br>" +
+            "<strong>Online-Formulare:</strong> " + (forms.join(", ") || "—") + "<br>" +
+            "<strong>Benutzergruppen:</strong> " + (groups.join(", ") || "—");
+    }
+
+    document.querySelectorAll(".wiz-step-btn").forEach(function (btn) {
+        btn.addEventListener("click", function () { showStep(Number(btn.dataset.step)); });
+    });
+    document.getElementById("wizPrevBtn").addEventListener("click", function () { showStep(currentStep - 1); });
+    document.getElementById("wizNextBtn").addEventListener("click", function () { showStep(currentStep + 1); });
+    document.querySelectorAll(".wiz-profile-radio").forEach(function (r) {
+        r.addEventListener("change", function () { if (r.checked) applyProfilePreset(r.value); });
+    });
+
+    const initialRadio = document.querySelector(".wiz-profile-radio:checked");
+    if (initialRadio) applyProfilePreset(initialRadio.value);
+    showStep(1);
+});
+</script>
+{% endblock %}
