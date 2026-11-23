@@ -1,4 +1,5 @@
 import json
+import logging
 
 from django.apps import apps
 from django.contrib import messages
@@ -95,11 +96,15 @@ def setup_wizard_apply_view(request):
         "reset_demo": request.POST.get("reset_demo") == "on",
         "hide_on_start": request.POST.get("hide_on_start") == "on",
     }
-    summary = apply_wizard_setup(payload, user=request.user)
-    messages.success(
-        request,
-        f"Einrichtung abgeschlossen (Gruppen: +{summary['groups_created']}, Blöcke: +{summary['blocks_added']}, Formulare/Listen: +{summary['collections_created']}, Kalender: +{summary['calendar_categories_created']}).",
-    )
+    try:
+        summary = apply_wizard_setup(payload, user=request.user)
+        messages.success(
+            request,
+            f"Einrichtung abgeschlossen (Gruppen: +{summary['groups_created']}, Blöcke: +{summary['blocks_added']}, Formulare/Listen: +{summary['collections_created']}, Kalender: +{summary['calendar_categories_created']}).",
+        )
+    except Exception as exc:
+        logging.getLogger(__name__).exception("Setup wizard apply failed")
+        messages.error(request, f"Einrichtung fehlgeschlagen ({type(exc).__name__}): {exc}")
     return redirect("seed_kit:wizard")
 
 

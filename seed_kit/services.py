@@ -177,31 +177,27 @@ def apply_wizard_setup(payload: dict, user=None) -> dict:
 
             tpl_map = {t.slug: t for t in seed_default_templates()}
             if enable_website and "news_feed" in selected_blocks and "news-aktuelles" in tpl_map:
-                _, created = Collection.objects.get_or_create(
-                    slug="news",
-                    defaults={
-                        "title": "Aktuelles & News",
-                        "template": tpl_map["news-aktuelles"],
-                        "owner": user,
-                        "responsible_user": user,
-                        "is_public": True,
-                    },
-                )
-                if created:
+                if not Collection.objects.filter(slug="news").exists():
+                    Collection.objects.create(
+                        slug="news",
+                        title="Aktuelles & News",
+                        template=tpl_map["news-aktuelles"],
+                        owner=user,
+                        responsible_user=user,
+                        is_public=True,
+                    )
                     summary["collections_created"] += 1
 
             if enable_website and "faq_list" in selected_blocks and "faq" in tpl_map:
-                _, created = Collection.objects.get_or_create(
-                    slug="faq",
-                    defaults={
-                        "title": "Häufige Fragen (FAQ)",
-                        "template": tpl_map["faq"],
-                        "owner": user,
-                        "responsible_user": user,
-                        "is_public": True,
-                    },
-                )
-                if created:
+                if not Collection.objects.filter(slug="faq").exists():
+                    Collection.objects.create(
+                        slug="faq",
+                        title="Häufige Fragen (FAQ)",
+                        template=tpl_map["faq"],
+                        owner=user,
+                        responsible_user=user,
+                        is_public=True,
+                    )
                     summary["collections_created"] += 1
 
             form_titles = dict(FORM_PRESETS)
@@ -209,18 +205,16 @@ def apply_wizard_setup(payload: dict, user=None) -> dict:
                 tpl = tpl_map.get(form_slug)
                 if not tpl:
                     continue
-                _, created = Collection.objects.get_or_create(
-                    slug=form_slug,
-                    defaults={
-                        "title": form_titles.get(form_slug, tpl.name),
-                        "template": tpl,
-                        "owner": user,
-                        "responsible_user": user,
-                        "is_public": True,
-                        "allow_public_submit": True,
-                    },
-                )
-                if created:
+                if not Collection.objects.filter(slug=form_slug).exists():
+                    Collection.objects.create(
+                        slug=form_slug,
+                        title=form_titles.get(form_slug, tpl.name),
+                        template=tpl,
+                        owner=user,
+                        responsible_user=user,
+                        is_public=True,
+                        allow_public_submit=True,
+                    )
                     summary["collections_created"] += 1
 
         # 3. site_kit: SiteConfig + Home Page + non-duplicate blocks
@@ -242,7 +236,6 @@ def apply_wizard_setup(payload: dict, user=None) -> dict:
             if home is None:
                 home = PublicPage.objects.create(
                     title=site_name or "Startseite",
-                    slug="startseite",
                     is_home=True,
                     is_published=True,
                     show_in_nav=False,
