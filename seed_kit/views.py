@@ -76,6 +76,7 @@ def setup_wizard_apply_view(request):
         return HttpResponseForbidden("Admin-Zugriff erforderlich.")
     payload = {
         "profile_key": request.POST.get("profile_key") or "verein",
+        "addons": request.POST.getlist("addons"),
         "site_name": request.POST.get("site_name") or "",
         "tagline": request.POST.get("tagline") or "",
         "contact_email": request.POST.get("contact_email") or "",

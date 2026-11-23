@@ -42,6 +42,14 @@
                     </div>
                     {% endfor %}
                 </div>
+                <div class="border rounded-3 p-3 bg-body-tertiary mb-3">
+                    <div class="fw-semibold small mb-2"><i class="bi bi-plus-square me-1 text-primary"></i>Kombinierbare Zusatz-Bereiche (optional):</div>
+                    <div class="d-flex flex-wrap gap-3">
+                        <label class="form-check mb-0"><input type="checkbox" name="addons" value="academy" class="form-check-input wiz-addon-chk"><span class="form-check-label small">+ Kursbetrieb / Akademie (Dozenten, Kurse, Anmeldung)</span></label>
+                        <label class="form-check mb-0"><input type="checkbox" name="addons" value="membership" class="form-check-input wiz-addon-chk"><span class="form-check-label small">+ Mitglieder-Portal &amp; Anträge</span></label>
+                        <label class="form-check mb-0"><input type="checkbox" name="addons" value="newsletter" class="form-check-input wiz-addon-chk"><span class="form-check-label small">+ Newsletter-Abo</span></label>
+                    </div>
+                </div>
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label class="form-label small fw-semibold">Projekt- / Organisationsname</label>
@@ -250,6 +258,31 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("wizNextBtn").addEventListener("click", function () { showStep(currentStep + 1); });
     document.querySelectorAll(".wiz-profile-radio").forEach(function (r) {
         r.addEventListener("change", function () { if (r.checked) applyProfilePreset(r.value); });
+    });
+    document.querySelectorAll(".wiz-addon-chk").forEach(function (cb) {
+        cb.addEventListener("change", function () {
+            if (!cb.checked) return;
+            if (cb.value === "academy") {
+                ["inventory", "persons", "documents"].forEach(function (m) {
+                    const el = document.querySelector('.wiz-mod-chk[value="' + m + '"]'); if (el) el.checked = true;
+                });
+                ["upcoming_events", "people_grid"].forEach(function (b) {
+                    const el = document.querySelector('.wiz-block-chk[value="' + b + '"]'); if (el) el.checked = true;
+                });
+                const f = document.querySelector('.wiz-form-chk[value="kurs-anmeldung"]'); if (f) f.checked = true;
+                const calInp = document.getElementById("wizCalCats");
+                if (calInp && !calInp.value.toLowerCase().includes("kurse")) {
+                    calInp.value = calInp.value ? (calInp.value + ", Kurse") : "Kurse";
+                }
+            } else if (cb.value === "membership") {
+                ["mitgliedsantrag", "kuendigung"].forEach(function (f) {
+                    const el = document.querySelector('.wiz-form-chk[value="' + f + '"]'); if (el) el.checked = true;
+                });
+                const g = document.querySelector('.wiz-group-chk[value="Mitglied / Portal"]'); if (g) g.checked = true;
+            } else if (cb.value === "newsletter") {
+                const f = document.querySelector('.wiz-form-chk[value="newsletter-abo"]'); if (f) f.checked = true;
+            }
+        });
     });
 
     const initialRadio = document.querySelector(".wiz-profile-radio:checked");

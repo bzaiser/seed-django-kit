@@ -136,12 +136,13 @@ def apply_wizard_setup(payload: dict, user=None) -> dict:
     selected_groups = list(payload.get("groups") or [])
     custom_groups_raw = (payload.get("custom_groups") or "").strip()
     selected_cal_cats = list(payload.get("calendar_categories") or [])
+    addons = set(payload.get("addons") or [])
 
     with transaction.atomic():
         # 1. domain_kit: modules + default groups/roles + custom groups
         if apps.is_installed("domain_kit"):
             from django.contrib.auth.models import Group
-            from domain_kit.models import DomainModuleSettings
+            from domain_kit.models import DomainModuleSettings, Role
             from domain_kit.services import ensure_group_permission_rows, seed_domain_defaults
 
             solo = DomainModuleSettings.get_solo()
@@ -155,6 +156,8 @@ def apply_wizard_setup(payload: dict, user=None) -> dict:
             summary["modules_updated"] = True
 
             seed_domain_defaults()
+            if "academy" in addons or profile_key == "academy":
+                Role.objects.get_or_create(name="Dozent / Referent", defaults={"color_state": 2, "position": 25})
             for gname in selected_groups:
                 _, created = Group.objects.get_or_create(name=gname)
                 if created:
@@ -271,6 +274,17 @@ def apply_wizard_setup(payload: dict, user=None) -> dict:
                     block_type="public_form",
                     title=dict(FORM_PRESETS).get(first_form, "Kontakt & Anfrage"),
                     config_json={"collection_slug": first_form},
+                    position=next_pos,
+                )
+                next_pos += 10
+                summary["blocks_added"] += 1
+
+            if ("academy" in addons or profile_key == "academy") and not home.blocks.filter(title="Unsere Dozenten").exists():
+                PageBlock.objects.create(
+                    page=home,
+                    block_type="people_grid",
+                    title="Unsere Dozenten",
+                    config_json={"role_filter": "Dozent"},
                     position=next_pos,
                 )
                 summary["blocks_added"] += 1

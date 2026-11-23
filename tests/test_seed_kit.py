@@ -96,6 +96,7 @@ class SeedKitTests(TestCase):
 
         r_post = self.client.post("/setup/apply/", {
             "profile_key": "verein",
+            "addons": ["academy", "membership", "newsletter"],
             "site_name": "TSV Test",
             "modules": ["persons", "documents"],
             "enable_website": "on",
