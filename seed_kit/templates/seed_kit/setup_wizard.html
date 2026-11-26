@@ -13,17 +13,17 @@
     </div>
 
     <!-- Step Progress Bar -->
-    <div class="d-flex flex-wrap gap-2 mb-4" id="wizardStepPills">
-        <button type="button" class="btn btn-sm rounded-pill btn-primary wiz-step-btn" data-step="1">1. Projekt &amp; Zweck</button>
-        <button type="button" class="btn btn-sm rounded-pill btn-outline-secondary wiz-step-btn" data-step="2">2. Module</button>
-        <button type="button" class="btn btn-sm rounded-pill btn-outline-secondary wiz-step-btn" data-step="3">3. Webseite &amp; Formulare</button>
-        <button type="button" class="btn btn-sm rounded-pill btn-outline-secondary wiz-step-btn" data-step="4">4. Gruppen &amp; Kalender</button>
-        <button type="button" class="btn btn-sm rounded-pill btn-outline-secondary wiz-step-btn" data-step="5">5. Zusammenfassung &amp; Start</button>
-    </div>
+    <ul class="nav folder-tabs-bar mb-0" id="wizardStepPills" role="tablist">
+        <li class="nav-item" role="presentation"><button type="button" class="nav-link active wiz-step-btn" data-step="1"><i class="bi bi-1-circle me-1"></i>Projekt &amp; Zweck</button></li>
+        <li class="nav-item" role="presentation"><button type="button" class="nav-link wiz-step-btn" data-step="2"><i class="bi bi-2-circle me-1"></i>Module</button></li>
+        <li class="nav-item" role="presentation"><button type="button" class="nav-link wiz-step-btn" data-step="3"><i class="bi bi-3-circle me-1"></i>Webseite &amp; Formulare</button></li>
+        <li class="nav-item" role="presentation"><button type="button" class="nav-link wiz-step-btn" data-step="4"><i class="bi bi-4-circle me-1"></i>Gruppen &amp; Kalender</button></li>
+        <li class="nav-item" role="presentation"><button type="button" class="nav-link wiz-step-btn" data-step="5"><i class="bi bi-5-circle me-1"></i>Zusammenfassung &amp; Start</button></li>
+    </ul>
 
-    <form method="post" action="{% url 'seed_kit:wizard_apply' %}" id="setupWizardForm" class="card shadow-sm rounded-4">
+    <form method="post" action="{% url 'seed_kit:wizard_apply' %}" id="setupWizardForm" class="ds-tab-panel p-3 p-md-4">
         {% csrf_token %}
-        <div class="card-body p-4">
+        <div>
 
             <!-- STEP 1 -->
             <div class="wiz-pane" data-step="1">
@@ -180,7 +180,7 @@
             </div>
 
         </div>
-        <div class="card-footer d-flex justify-content-between align-items-center">
+        <div class="border-top pt-3 mt-4 d-flex justify-content-between align-items-center">
             <button type="button" class="btn btn-outline-secondary rounded-pill px-3" id="wizPrevBtn" disabled>Zurück</button>
             <div class="d-flex gap-2">
                 <button type="button" class="btn btn-primary rounded-pill px-4" id="wizNextBtn">Weiter</button>
@@ -210,8 +210,11 @@ document.addEventListener("DOMContentLoaded", function () {
         });
         document.querySelectorAll(".wiz-step-btn").forEach(function (btn) {
             const active = Number(btn.dataset.step) === currentStep;
-            btn.classList.toggle("btn-primary", active);
-            btn.classList.toggle("btn-outline-secondary", !active);
+            btn.classList.toggle("active", active);
+            btn.setAttribute("aria-selected", active ? "true" : "false");
+            if (active) {
+                btn.dispatchEvent(new Event("shown.bs.tab", { bubbles: true }));
+            }
         });
         document.getElementById("wizPrevBtn").disabled = currentStep === 1;
         document.getElementById("wizNextBtn").classList.toggle("d-none", currentStep === totalSteps);

@@ -37,6 +37,7 @@ if not settings.configured:
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "design_studio.context_processors.theme_context",
             ]},
         }],
     )
